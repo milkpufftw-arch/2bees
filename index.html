@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>超級蜜蜂進化論：關卡選擇版</title>
+    <title>超級蜜蜂進化論：精確難度版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
     <style>
@@ -15,132 +15,90 @@
             overflow: hidden;
             background-color: #fdfdf5;
             font-family: 'Varela Round', sans-serif;
-            /* 禁止全域縮放與捲動 */
             touch-action: none;
             -webkit-user-select: none;
             user-select: none;
             transition: background-color 2s;
         }
 
-        /* --- 遊戲畫布 --- */
-        #game-container {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            display: none; z-index: 1;
-        }
+        #game-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 1; }
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* 特效與UI層 */
-        #damage-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 0, 0, 0.4); pointer-events: none; z-index: 5;
-            opacity: 0; transition: opacity 0.1s;
-        }
-        #flash-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; pointer-events: none; z-index: 20;
-            opacity: 0; transition: opacity 3s ease-in;
-        }
-        #ui-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 10;
-            display: flex; flex-direction: column;
-            justify-content: space-between; padding: 16px;
-        }
+        /* 特效層 */
+        #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 0, 0, 0.4); pointer-events: none; z-index: 5; opacity: 0; transition: opacity 0.1s; }
+        #flash-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; pointer-events: none; z-index: 20; opacity: 0; transition: opacity 3s ease-in; }
 
-        /* --- 全螢幕覆蓋層 (首頁/結算) --- */
-        .overlay-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #fdfdf5; z-index: 9999;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            transition: opacity 0.5s;
-        }
+        /* UI 層 */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; }
+
+        /* 全螢幕覆蓋層 */
+        .overlay-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #fdfdf5; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
         .hidden { display: none !important; }
 
-        /* --- 按鈕樣式 --- */
+        /* 按鈕樣式 */
         .nook-btn {
             color: white; font-size: 1.2rem; padding: 12px 20px;
-            border-radius: 99px; border: none;
-            cursor: pointer; font-weight: bold; margin-bottom: 8px;
-            pointer-events: auto; 
-            touch-action: manipulation;
-            transition: transform 0.1s;
-            width: 100%; max-width: 300px;
-            display: block; text-align: center;
-            position: relative; z-index: 10001;
+            border-radius: 99px; border: none; cursor: pointer; font-weight: bold;
+            pointer-events: auto; touch-action: manipulation; transition: transform 0.1s;
+            width: 100%; max-width: 300px; text-align: center; position: relative; z-index: 10001;
+            margin-bottom: 10px; box-shadow: 0 4px 0 rgba(0,0,0,0.2);
         }
         .nook-btn:active { transform: translateY(4px); box-shadow: none !important; }
         
-        /* 難度選擇小按鈕 */
+        /* 難度按鈕組 */
+        .diff-group { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; max-width: 320px; }
         .diff-btn {
-            flex: 1; padding: 8px; border-radius: 15px; border: none;
-            color: white; font-weight: bold; font-size: 0.9rem;
-            cursor: pointer; transition: all 0.2s;
-            pointer-events: auto; touch-action: manipulation;
+            flex: 1; padding: 10px 0; border-radius: 15px; border: none;
+            color: white; font-weight: bold; font-size: 1rem; cursor: pointer;
+            transition: all 0.2s; pointer-events: auto; touch-action: manipulation;
+            opacity: 0.6; transform: scale(0.95);
         }
-        .diff-btn.active { transform: scale(1.05); opacity: 1; box-shadow: 0 4px 0 rgba(0,0,0,0.2); z-index: 10; }
-        .diff-btn.inactive { opacity: 0.4; transform: scale(0.95); box-shadow: none; }
-
+        .diff-btn.active { opacity: 1; transform: scale(1.05); box-shadow: 0 4px 0 rgba(0,0,0,0.2); z-index: 10; }
+        
         .btn-easy { background-color: #8bd6b8; } 
         .btn-hard { background-color: #f39c12; } 
-        .btn-nightmare { background-color: #c0392b; } 
-        
+        .btn-nightmare { background-color: #c0392b; }
+
         .btn-space { background-color: #6c5ce7; box-shadow: 0 5px 0 #4834d4; }
-        .btn-green { background-color: #8bd6b8; box-shadow: 0 5px 0 #5dbf97; }
+        .btn-earth { background-color: #27ae60; box-shadow: 0 5px 0 #1e8449; }
         .btn-home { background-color: #95a5a6; box-shadow: 0 5px 0 #7f8c8d; }
 
         /* UI 元件 */
-        .nook-badge {
-            background: rgba(255, 255, 255, 0.95);
-            border: 4px solid #8bd6b8; border-radius: 30px;
-            padding: 8px 16px; color: #7c6b5d;
-            font-weight: bold; display: flex; align-items: center;
-            gap: 10px; font-size: 14px;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.05);
-        }
-        .progress-bar-bg { width: 120px; height: 12px; background: #e6dcc5; border-radius: 6px; overflow: hidden; }
+        .nook-badge { background: rgba(255, 255, 255, 0.95); border: 4px solid #8bd6b8; border-radius: 30px; padding: 8px 16px; color: #7c6b5d; font-weight: bold; display: flex; align-items: center; gap: 10px; font-size: 14px; box-shadow: 0 4px 0 rgba(0,0,0,0.05); }
+        .progress-bar-bg { width: 100px; height: 12px; background: #e6dcc5; border-radius: 6px; overflow: hidden; }
         .progress-bar-fill { height: 100%; width: 0%; background: #f2a84e; transition: width 0.3s; }
-        .timer-badge {
-            background: #fff; border: 4px solid #ff6b6b;
-            color: #ff6b6b; font-size: 1.5rem;
-            min-width: 100px; justify-content: center;
-            font-variant-numeric: tabular-nums;
-        }
+        
+        .timer-badge { background: #fff; border: 4px solid #ff6b6b; color: #ff6b6b; font-size: 1.5rem; min-width: 100px; justify-content: center; font-variant-numeric: tabular-nums; }
         .timer-emergency { animation: pulse-scale 0.5s infinite; background: #ffeaea; }
         @keyframes pulse-scale { 0%{transform:scale(1);} 50%{transform:scale(1.1);} 100%{transform:scale(1);} }
 
-        #diff-label {
-            position: absolute; top: 16px; right: 16px;
-            font-size: 0.8rem; color: #fff; padding: 4px 12px; border-radius: 20px;
-            font-weight: bold; opacity: 0.8;
-        }
+        #diff-label { position: absolute; top: 16px; right: 16px; font-size: 0.8rem; color: #fff; padding: 4px 12px; border-radius: 20px; font-weight: bold; opacity: 0.8; pointer-events: none; }
     </style>
 </head>
 <body>
 
-    <!-- 1. 首頁 (難度與關卡選擇) -->
+    <!-- 1. 首頁 -->
     <div id="start-screen" class="overlay-screen">
         <div class="text-center p-4 max-w-sm w-full">
             <h1 class="text-4xl text-[#68513d] font-bold mb-2">超級蜜蜂</h1>
-            <h2 class="text-2xl text-[#ff6b6b] font-bold mb-4">進化論</h2>
+            <h2 class="text-2xl text-[#ff6b6b] font-bold mb-6">進化論</h2>
             
-            <!-- 區域 1: 難度選擇 -->
-            <div class="bg-white p-4 rounded-3xl border-4 border-[#e6dcc5] mb-4 text-[#7c6b5d] shadow-sm">
-                <p class="font-bold text-center mb-2 text-sm">1. 選擇難度</p>
-                <div class="flex gap-2 justify-center mb-3">
-                    <button id="btn-diff-easy" onclick="setDifficulty('easy')" class="diff-btn btn-easy active">簡單</button>
-                    <button id="btn-diff-hard" onclick="setDifficulty('hard')" class="diff-btn btn-hard inactive">困難</button>
-                    <button id="btn-diff-nightmare" onclick="setDifficulty('nightmare')" class="diff-btn btn-nightmare inactive">惡夢</button>
+            <div class="bg-white p-5 rounded-3xl border-4 border-[#e6dcc5] mb-6 text-[#7c6b5d] shadow-sm">
+                <p class="font-bold text-center text-lg mb-3">1. 選擇難度</p>
+                <div class="diff-group">
+                    <button id="btn-diff-easy" onclick="setDiff('easy')" class="diff-btn btn-easy active">簡單</button>
+                    <button id="btn-diff-hard" onclick="setDiff('hard')" class="diff-btn btn-hard">困難</button>
+                    <button id="btn-diff-nightmare" onclick="setDiff('nightmare')" class="diff-btn btn-nightmare">惡夢</button>
                 </div>
-                <p id="diff-desc" class="text-xs text-center text-gray-500 h-8">時間充裕，成長標準。</p>
+                <div id="diff-desc" class="text-xs text-center text-gray-500 h-8 leading-tight">
+                    時間充裕，成長標準。
+                </div>
             </div>
 
-            <!-- 區域 2: 關卡選擇 -->
-            <div class="flex flex-col items-center w-full gap-3">
-                <p class="text-[#7c6b5d] font-bold text-sm">2. 選擇關卡出發</p>
-                <button onclick="startLevel(1)" class="nook-btn btn-green">🌍 第 1 關：地球</button>
-                <button onclick="startLevel(2)" class="nook-btn btn-space">🚀 第 2 關：太陽系</button>
+            <div class="flex flex-col gap-2 w-full items-center">
+                <p class="text-[#7c6b5d] font-bold mb-1">2. 選擇關卡出發</p>
+                <button onclick="startLevel(1)" class="nook-btn btn-earth">🌍 地球 (Earth)</button>
+                <button onclick="startLevel(2)" class="nook-btn btn-space">🚀 太空 (Space)</button>
             </div>
         </div>
     </div>
@@ -149,10 +107,10 @@
     <div id="level-clear-screen" class="overlay-screen hidden">
         <h1 class="text-5xl text-[#f2a84e] font-bold mb-4">地球制霸！</h1>
         <div class="text-8xl mb-6">🌍👑</div>
-        <p class="text-[#7c6b5d] font-bold mb-8">準備好征服宇宙了嗎？</p>
+        <p class="text-[#7c6b5d] font-bold mb-8">你已經征服了這顆星球。</p>
         <div class="flex flex-col gap-4 w-full max-w-xs items-center">
-            <button onclick="goToSpace()" class="nook-btn btn-space">🚀 飛向宇宙 (第2關)</button>
-            <button onclick="startLevel(1)" class="nook-btn btn-green">↺ 再挑戰一次地球</button>
+            <button onclick="startLevel(2)" class="nook-btn btn-space">🚀 飛向宇宙 (第2關)</button>
+            <button onclick="startLevel(1)" class="nook-btn btn-earth">↺ 再挑戰一次地球</button>
             <button onclick="goHome()" class="nook-btn btn-home">🏠 回到首頁</button>
         </div>
     </div>
@@ -162,9 +120,9 @@
         <h1 class="text-4xl text-yellow-300 font-bold mb-2">第 2 關：太陽系</h1>
         <div class="text-6xl mb-6 animate-bounce">👨‍🚀</div>
         <div class="bg-gray-800 p-6 rounded-3xl border-4 border-yellow-500 mb-6 text-left text-sm space-y-3 max-w-xs">
-            <p>⏳ <b>目標：</b> 認識八大行星並吃掉它們。</p>
-            <p>☄️ <b>引力：</b> 小心大行星的吸力。</p>
-            <p>☀️ <b>終局：</b> 滿級後撞進太陽核心。</p>
+            <p>⏳ <b>時限：</b> <span id="l2-time-display">120</span>秒。</p>
+            <p>⚠️ <b>注意：</b> 必須長大才能吃下一階星球！</p>
+            <p>☀️ <b>終局：</b> 滿級後撞進太陽。</p>
         </div>
         <button onclick="startLevel(2)" class="nook-btn btn-space">發射升空</button>
     </div>
@@ -175,7 +133,7 @@
         <div class="text-8xl mb-6">☠️</div>
         <p id="fail-reason" class="text-[#7c6b5d] font-bold mb-8">...</p>
         <div class="flex flex-col gap-4 w-full max-w-xs items-center">
-            <button onclick="retryLevel()" class="nook-btn btn-easy">再試一次本關</button>
+            <button onclick="retryLevel()" class="nook-btn btn-earth">再試一次本關</button>
             <button onclick="goHome()" class="nook-btn btn-home">🏠 回到首頁</button>
         </div>
     </div>
@@ -186,7 +144,7 @@
             <h1 class="text-5xl text-yellow-400 font-bold mb-4">宇宙新恆星</h1>
             <div class="text-8xl my-6 animate-pulse">☀️🐝</div>
             <p class="text-xl text-gray-300 mb-2 font-bold">遊戲通關</p>
-            <p class="text-sm text-gray-400 mb-8">你成為了照亮銀河系的新太陽。</p>
+            <p class="text-sm text-gray-400 mb-8">你與太陽融為一體，照亮了銀河系。</p>
             <button onclick="goHome()" class="nook-btn btn-space">🏠 回到首頁重新開始</button>
         </div>
         <div class="absolute inset-0 z-0 overflow-hidden">
@@ -225,61 +183,49 @@
 
     <script>
         // =============================================
-        // 1. 全域變數與設定
+        // 1. 全域變數與設定 (數值更新)
         // =============================================
-        
         const DIFFICULTY = {
             'easy': { 
-                name: '簡單', color: '#8bd6b8', desc: '時間充裕，成長標準。',
-                timeL1: 120, timeL2: 240, 
-                dangerProb: 0.2, growthRate: 0.33, penalty: 0.9 
+                name: '簡單', color: '#8bd6b8', 
+                desc: '輕鬆體驗。\n120秒 / 危險 20%\n撞到縮小 10%',
+                timeL1: 120, timeL2: 120, // 修正為 120
+                dangerProb: 0.2, growthRate: 0.33, penalty: 0.9,
+                bossHitBox: 1.05 
             },
             'hard': { 
-                name: '困難', color: '#f39c12', desc: '時間略減，成長變慢。',
-                timeL1: 100, timeL2: 200, 
-                dangerProb: 0.25, growthRate: 0.3, penalty: 0.85 
+                name: '困難', color: '#f39c12', 
+                desc: '進階挑戰。\n120秒 / 危險 25%\n撞到縮小 15%',
+                timeL1: 120, timeL2: 120, // 修正為 120
+                dangerProb: 0.25, growthRate: 0.26, // 80% of 0.33
+                penalty: 0.85, 
+                bossHitBox: 0.95 
             },
             'nightmare': { 
-                name: '惡夢', color: '#c0392b', desc: '極限操作，失誤即死。',
-                timeL1: 90, timeL2: 180, 
-                dangerProb: 0.35, growthRate: 0.23, penalty: 0.8 
+                name: '惡夢', color: '#c0392b', 
+                desc: '極限操作。\n120秒 / 危險 25%\n撞到縮小 15%',
+                timeL1: 120, timeL2: 120, // 修正為 120
+                dangerProb: 0.25, growthRate: 0.28, // 85% of 0.33
+                penalty: 0.85, // 修正為 15%
+                bossHitBox: 0.85 
             }
         };
 
+        // 關卡資料 (嚴格分階)
         const LEVEL_1_DATA = [
-            { name: "幼年期", min: 20, grid: 60, objs: [
-                {t:"🌸",s:12,v:5}, {t:"🍬",s:14,v:6}, {t:"🍀",s:10,v:4}, {t:"🍓",s:16,v:7}, {t:"🍪",s:18,v:5}
-            ] },
-            { name: "成長期", min: 60, grid: 120, objs: [
-                {t:"🍎",s:50,v:15}, {t:"🍔",s:55,v:20}, {t:"🍄",s:45,v:12}, {t:"🍕",s:58,v:22}, {t:"🏀",s:65,v:25}
-            ] },
-            { name: "巨大期", min: 200, grid: 300, objs: [
-                {t:"🌳",s:140,v:50}, {t:"🚗",s:160,v:60}, {t:"🐕",s:120,v:40}, {t:"🚲",s:130,v:45}, {t:"⛺",s:180,v:55}
-            ] },
-            { name: "怪獸期", min: 600, grid: 800, objs: [
-                {t:"🏠",s:400,v:150}, {t:"🏢",s:550,v:200}, {t:"🦖",s:450,v:180}, {t:"🚢",s:500,v:190}, {t:"🏟️",s:520,v:220}
-            ] },
-            { name: "地球級", min: 1500, grid: 2000, objs: [
-                {t:"✈️",s:800,v:400}, {t:"⛰️",s:1200,v:800}, {t:"🌋",s:1000,v:600}, {t:"🏝️",s:1100,v:700}, {t:"🗽",s:700,v:300}
-            ] }
+            { name: "幼年期", min: 20, grid: 60, objs: [{t:"🌸",s:12,v:5}, {t:"🍬",s:14,v:6}, {t:"🍀",s:10,v:4}, {t:"🍓",s:16,v:7}, {t:"🍪",s:18,v:5}] },
+            { name: "成長期", min: 60, grid: 120, objs: [{t:"🍎",s:50,v:15}, {t:"🍔",s:55,v:20}, {t:"🍄",s:45,v:12}, {t:"🍕",s:58,v:22}, {t:"🏀",s:65,v:25}] },
+            { name: "巨大期", min: 200, grid: 300, objs: [{t:"🌳",s:140,v:50}, {t:"🚗",s:160,v:60}, {t:"🐕",s:120,v:40}, {t:"🚲",s:130,v:45}, {t:"⛺",s:180,v:55}] },
+            { name: "怪獸期", min: 600, grid: 800, objs: [{t:"🏠",s:400,v:150}, {t:"🏢",s:550,v:200}, {t:"🦖",s:450,v:180}, {t:"🚢",s:500,v:190}, {t:"🏟️",s:520,v:220}] },
+            { name: "地球級", min: 1500, grid: 2000, objs: [{t:"✈️",s:800,v:400}, {t:"⛰️",s:1200,v:800}, {t:"🌋",s:1000,v:600}, {t:"🏝️",s:1100,v:700}, {t:"🗽",s:700,v:300}] }
         ];
 
         const LEVEL_2_DATA = [
-            { name: "近地軌道", min: 60, grid: 120, objs: [
-                {t:"🛰️",s:30,v:10,n:"衛星"}, {t:"🚀",s:40,v:15,n:"火箭"}, {t:"📡",s:35,v:12,n:"探測"}, {t:"🔭",s:45,v:18,n:"哈伯"}, {t:"🗑️",s:28,v:8,n:"垃圾"}
-            ] },
-            { name: "小行星帶", min: 200, grid: 300, objs: [
-                {t:"☄️",s:80,v:30,n:"彗星"}, {t:"🌑",s:120,v:50,n:"小月球"}, {t:"🪨",s:70,v:25,n:"隕石"}, {t:"🛸",s:100,v:35,n:"UFO"}, {t:"💎",s:90,v:45,n:"晶體"}
-            ] },
-            { name: "岩石行星", min: 800, grid: 800, objs: [
-                {t:"⚪",s:250,v:100,n:"水星"}, {t:"🔴",s:300,v:120,n:"火星"}, {t:"🟢",s:350,v:150,n:"金星"}, {t:"🔵",s:380,v:160,n:"地球"}, {t:"🌕",s:200,v:90,n:"大月球"}
-            ] },
-            { name: "氣體巨星", min: 2500, grid: 1800, objs: [
-                {t:"🔵",s:700,v:300,n:"海王星",g:true}, {t:"💠",s:750,v:350,n:"天王星",g:true}, {t:"🪐",s:1000,v:500,n:"土星",g:true}, {t:"🟠",s:1300,v:800,n:"木星",g:true}, {t:"🟣",s:600,v:250,n:"冥王星"}
-            ] },
-            { name: "恆星級", min: 8000, grid: 5000, objs: [
-                {t:"🌌",s:2200,v:1000,n:"星雲"}, {t:"🕳️",s:2800,v:1200,n:"黑洞"}, {t:"💫",s:2000,v:900,n:"脈衝星"}, {t:"⭐",s:1800,v:800,n:"巨星"}, {t:"🌀",s:2500,v:1100,n:"星系"}
-            ] }
+            { name: "近地軌道", min: 60, grid: 120, objs: [{t:"🛰️",s:30,v:10,n:"衛星"}, {t:"🚀",s:40,v:15,n:"火箭"}, {t:"📡",s:35,v:12,n:"探測"}, {t:"🔭",s:45,v:18,n:"哈伯"}, {t:"🗑️",s:28,v:8,n:"垃圾"}] },
+            { name: "小行星帶", min: 200, grid: 300, objs: [{t:"☄️",s:80,v:30,n:"彗星"}, {t:"🌑",s:120,v:50,n:"小月球"}, {t:"🪨",s:70,v:25,n:"隕石"}, {t:"🛸",s:100,v:35,n:"UFO"}, {t:"💎",s:90,v:45,n:"晶體"}] },
+            { name: "岩石行星", min: 800, grid: 800, objs: [{t:"⚪",s:250,v:100,n:"水星"}, {t:"🔴",s:300,v:120,n:"火星"}, {t:"🟢",s:350,v:150,n:"金星"}, {t:"🔵",s:380,v:160,n:"地球"}, {t:"🌕",s:200,v:90,n:"大月球"}] },
+            { name: "氣體巨星", min: 2500, grid: 1800, objs: [{t:"🔵",s:700,v:300,n:"海王星",g:true}, {t:"💠",s:750,v:350,n:"天王星",g:true}, {t:"🪐",s:1000,v:500,n:"土星",g:true}, {t:"🟠",s:1300,v:800,n:"木星",g:true}, {t:"🟣",s:600,v:250,n:"冥王星"}] },
+            { name: "恆星級", min: 8000, grid: 5000, objs: [{t:"🌌",s:2200,v:1000,n:"星雲"}, {t:"🕳️",s:2800,v:1200,n:"黑洞"}, {t:"💫",s:2000,v:900,n:"脈衝星"}, {t:"⭐",s:1800,v:800,n:"巨星"}, {t:"🌀",s:2500,v:1100,n:"星系"}] }
         ];
 
         let currentDiff = 'easy';
@@ -302,35 +248,29 @@
         // 2. 全域函式
         // =============================================
 
-        // 設定難度
-        window.setDifficulty = function(diff) {
+        window.setDiff = function(diff) {
             currentDiff = diff;
-            // 更新 UI 狀態
             ['easy', 'hard', 'nightmare'].forEach(d => {
                 const btn = document.getElementById(`btn-diff-${d}`);
                 if (d === diff) {
-                    btn.classList.remove('inactive');
                     btn.classList.add('active');
-                    // 加上 ring
-                    if (d === 'easy') btn.classList.add('ring-4', 'ring-[#5dbf97]');
-                    else if (d === 'hard') btn.classList.add('ring-4', 'ring-[#d35400]');
-                    else btn.classList.add('ring-4', 'ring-[#922b21]');
+                    btn.style.boxShadow = `0 4px 0 rgba(0,0,0,0.2)`;
                 } else {
-                    btn.classList.remove('active', 'ring-4', 'ring-[#5dbf97]', 'ring-[#d35400]', 'ring-[#922b21]');
-                    btn.classList.add('inactive');
+                    btn.classList.remove('active');
+                    btn.style.boxShadow = 'none';
                 }
             });
-            // 更新描述
-            document.getElementById('diff-desc').innerText = DIFFICULTY[diff].desc;
+            document.getElementById('diff-desc').innerHTML = DIFFICULTY[diff].desc.replace('\n', '<br>');
+            
+            // 更新第二關介紹的時間
+            document.getElementById('l2-time-display').innerText = DIFFICULTY[diff].timeL2;
         };
 
         window.startLevel = function(level) {
-            // 隱藏所有選單
             document.querySelectorAll('.overlay-screen').forEach(el => el.classList.add('hidden'));
             document.getElementById('game-container').style.display = 'block';
             document.getElementById('flash-overlay').style.opacity = 0;
             
-            // 更新難度顯示標籤
             const diffLabel = document.getElementById('diff-label');
             if(diffLabel) {
                 diffLabel.innerText = DIFFICULTY[currentDiff].name;
@@ -346,20 +286,12 @@
         };
 
         window.retryLevel = function() {
-            startLevel(currentLevel);
+            window.startLevel(currentLevel);
         };
 
+        // ★★★ 強制重新整理頁面，確保回到首頁按鈕有效 ★★★
         window.goHome = function() {
-            if (animId) cancelAnimationFrame(animId);
-            isGameOver = true;
-            document.getElementById('game-container').style.display = 'none';
-            document.querySelectorAll('.overlay-screen').forEach(el => el.classList.add('hidden'));
-            document.getElementById('flash-overlay').style.opacity = 0;
-            document.body.style.backgroundColor = "#fdfdf5";
-            
-            // 重置首頁狀態
-            document.getElementById('start-screen').classList.remove('hidden');
-            setDifficulty(currentDiff); // 恢復上次選擇的難度顯示
+            window.location.reload(); 
         };
 
         // =============================================
@@ -619,15 +551,13 @@
             if (boss) {
                 let d = Math.hypot(player.x - boss.x, player.y - boss.y);
                 
-                // 勝利判定修正：只要接觸到 BOSS 本體 (90% 半徑) 且 體型夠大 就贏
-                let isTouching = d < (player.size + boss.size) * 0.90;
+                let isTouching = d < (player.size + boss.size) * config.bossHitBox;
                 
                 if (isTouching) {
                     if (player.size >= winSize) {
                         shake = 50; 
                         if(currentLevel === 1) level1Clear(); else finalVictory();
                     } else {
-                        // 體型不夠大 -> 彈開
                         if(player.invulnerable <= 0) {
                             player.size *= config.penalty; 
                             player.invulnerable = 1.0;
@@ -673,7 +603,6 @@
             
             document.getElementById('ui-stage').innerText = STAGES[sIdx].name;
             if(!boss) {
-                // UI 提示優化：顯示當前階段所有可吃物品
                 let items = STAGES[sIdx].objs.map(o => o.t).join(" ");
                 document.getElementById('ui-hint').innerText = `目標：${items}`;
             }
@@ -709,7 +638,6 @@
             }, 3000);
         }
 
-        // 繪圖與循環
         function draw() {
             let sx = (Math.random()-0.5)*shake, sy = (Math.random()-0.5)*shake;
 
@@ -865,3 +793,5 @@
     </script>
 </body>
 </html>
+
+
