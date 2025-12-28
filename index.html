@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>超級蜜蜂進化論：絕對修復版</title>
+    <title>超級蜜蜂進化論：關卡選擇版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet">
     <style>
@@ -60,25 +60,35 @@
 
         /* --- 按鈕樣式 --- */
         .nook-btn {
-            color: white; font-size: 1.2rem; padding: 12px 30px;
+            color: white; font-size: 1.2rem; padding: 12px 20px;
             border-radius: 99px; border: none;
-            cursor: pointer; font-weight: bold; margin-bottom: 12px;
-            /* 關鍵修正：允許按鈕進行預設觸控行為，確保 click 事件觸發 */
+            cursor: pointer; font-weight: bold; margin-bottom: 8px;
             pointer-events: auto; 
             touch-action: manipulation;
             transition: transform 0.1s;
-            width: 100%; max-width: 280px;
+            width: 100%; max-width: 300px;
             display: block; text-align: center;
             position: relative; z-index: 10001;
         }
         .nook-btn:active { transform: translateY(4px); box-shadow: none !important; }
         
-        .btn-easy { background-color: #8bd6b8; box-shadow: 0 5px 0 #5dbf97; } 
-        .btn-hard { background-color: #f39c12; box-shadow: 0 5px 0 #d35400; } 
-        .btn-nightmare { background-color: #c0392b; box-shadow: 0 5px 0 #922b21; } 
+        /* 難度選擇小按鈕 */
+        .diff-btn {
+            flex: 1; padding: 8px; border-radius: 15px; border: none;
+            color: white; font-weight: bold; font-size: 0.9rem;
+            cursor: pointer; transition: all 0.2s;
+            pointer-events: auto; touch-action: manipulation;
+        }
+        .diff-btn.active { transform: scale(1.05); opacity: 1; box-shadow: 0 4px 0 rgba(0,0,0,0.2); z-index: 10; }
+        .diff-btn.inactive { opacity: 0.4; transform: scale(0.95); box-shadow: none; }
+
+        .btn-easy { background-color: #8bd6b8; } 
+        .btn-hard { background-color: #f39c12; } 
+        .btn-nightmare { background-color: #c0392b; } 
         
-        .btn-space { background-color: #6c5ce7; box-shadow: 0 6px 0 #4834d4; }
-        .btn-home { background-color: #95a5a6; box-shadow: 0 6px 0 #7f8c8d; }
+        .btn-space { background-color: #6c5ce7; box-shadow: 0 5px 0 #4834d4; }
+        .btn-green { background-color: #8bd6b8; box-shadow: 0 5px 0 #5dbf97; }
+        .btn-home { background-color: #95a5a6; box-shadow: 0 5px 0 #7f8c8d; }
 
         /* UI 元件 */
         .nook-badge {
@@ -109,24 +119,28 @@
 </head>
 <body>
 
-    <!-- 1. 首頁 (難度選擇) -->
+    <!-- 1. 首頁 (難度與關卡選擇) -->
     <div id="start-screen" class="overlay-screen">
         <div class="text-center p-4 max-w-sm w-full">
             <h1 class="text-4xl text-[#68513d] font-bold mb-2">超級蜜蜂</h1>
-            <h2 class="text-2xl text-[#ff6b6b] font-bold mb-6">進化論</h2>
+            <h2 class="text-2xl text-[#ff6b6b] font-bold mb-4">進化論</h2>
             
-            <div class="bg-white p-5 rounded-3xl border-4 border-[#e6dcc5] mb-6 text-[#7c6b5d] shadow-sm text-left text-sm space-y-2">
-                <p>🌱 <b>簡單：</b> 120秒/240秒，輕鬆成長。</p>
-                <p>🔥 <b>困難：</b> 100秒/200秒，成長變慢。</p>
-                <p>💀 <b>惡夢：</b> 90秒/180秒，極限挑戰。</p>
-                <p class="mt-2 text-xs text-center text-gray-400">規則：必須長大才能吃下一階物品</p>
+            <!-- 區域 1: 難度選擇 -->
+            <div class="bg-white p-4 rounded-3xl border-4 border-[#e6dcc5] mb-4 text-[#7c6b5d] shadow-sm">
+                <p class="font-bold text-center mb-2 text-sm">1. 選擇難度</p>
+                <div class="flex gap-2 justify-center mb-3">
+                    <button id="btn-diff-easy" onclick="setDifficulty('easy')" class="diff-btn btn-easy active">簡單</button>
+                    <button id="btn-diff-hard" onclick="setDifficulty('hard')" class="diff-btn btn-hard inactive">困難</button>
+                    <button id="btn-diff-nightmare" onclick="setDifficulty('nightmare')" class="diff-btn btn-nightmare inactive">惡夢</button>
+                </div>
+                <p id="diff-desc" class="text-xs text-center text-gray-500 h-8">時間充裕，成長標準。</p>
             </div>
 
-            <!-- 使用 onclick 直接呼叫，確保無誤 -->
-            <div class="flex flex-col items-center w-full gap-2">
-                <button onclick="selectDifficulty('easy')" class="nook-btn btn-easy">簡單模式 (Easy)</button>
-                <button onclick="selectDifficulty('hard')" class="nook-btn btn-hard">困難模式 (Hard)</button>
-                <button onclick="selectDifficulty('nightmare')" class="nook-btn btn-nightmare">惡夢模式 (Nightmare)</button>
+            <!-- 區域 2: 關卡選擇 -->
+            <div class="flex flex-col items-center w-full gap-3">
+                <p class="text-[#7c6b5d] font-bold text-sm">2. 選擇關卡出發</p>
+                <button onclick="startLevel(1)" class="nook-btn btn-green">🌍 第 1 關：地球</button>
+                <button onclick="startLevel(2)" class="nook-btn btn-space">🚀 第 2 關：太陽系</button>
             </div>
         </div>
     </div>
@@ -138,7 +152,7 @@
         <p class="text-[#7c6b5d] font-bold mb-8">準備好征服宇宙了嗎？</p>
         <div class="flex flex-col gap-4 w-full max-w-xs items-center">
             <button onclick="goToSpace()" class="nook-btn btn-space">🚀 飛向宇宙 (第2關)</button>
-            <button onclick="startLevel(1)" class="nook-btn btn-easy">↺ 再挑戰一次地球</button>
+            <button onclick="startLevel(1)" class="nook-btn btn-green">↺ 再挑戰一次地球</button>
             <button onclick="goHome()" class="nook-btn btn-home">🏠 回到首頁</button>
         </div>
     </div>
@@ -211,22 +225,22 @@
 
     <script>
         // =============================================
-        // 1. 全域變數與設定 (放在最前面)
+        // 1. 全域變數與設定
         // =============================================
         
         const DIFFICULTY = {
             'easy': { 
-                name: '簡單', color: '#8bd6b8',
+                name: '簡單', color: '#8bd6b8', desc: '時間充裕，成長標準。',
                 timeL1: 120, timeL2: 240, 
                 dangerProb: 0.2, growthRate: 0.33, penalty: 0.9 
             },
             'hard': { 
-                name: '困難', color: '#f39c12',
+                name: '困難', color: '#f39c12', desc: '時間略減，成長變慢。',
                 timeL1: 100, timeL2: 200, 
                 dangerProb: 0.25, growthRate: 0.3, penalty: 0.85 
             },
             'nightmare': { 
-                name: '惡夢', color: '#c0392b',
+                name: '惡夢', color: '#c0392b', desc: '極限操作，失誤即死。',
                 timeL1: 90, timeL2: 180, 
                 dangerProb: 0.35, growthRate: 0.23, penalty: 0.8 
             }
@@ -285,12 +299,29 @@
         let audioCtx = null;
 
         // =============================================
-        // 2. 全域函式 (掛載到 window，確保 HTML 可呼叫)
+        // 2. 全域函式
         // =============================================
 
-        window.selectDifficulty = function(diff) {
+        // 設定難度
+        window.setDifficulty = function(diff) {
             currentDiff = diff;
-            startLevel(1);
+            // 更新 UI 狀態
+            ['easy', 'hard', 'nightmare'].forEach(d => {
+                const btn = document.getElementById(`btn-diff-${d}`);
+                if (d === diff) {
+                    btn.classList.remove('inactive');
+                    btn.classList.add('active');
+                    // 加上 ring
+                    if (d === 'easy') btn.classList.add('ring-4', 'ring-[#5dbf97]');
+                    else if (d === 'hard') btn.classList.add('ring-4', 'ring-[#d35400]');
+                    else btn.classList.add('ring-4', 'ring-[#922b21]');
+                } else {
+                    btn.classList.remove('active', 'ring-4', 'ring-[#5dbf97]', 'ring-[#d35400]', 'ring-[#922b21]');
+                    btn.classList.add('inactive');
+                }
+            });
+            // 更新描述
+            document.getElementById('diff-desc').innerText = DIFFICULTY[diff].desc;
         };
 
         window.startLevel = function(level) {
@@ -299,7 +330,7 @@
             document.getElementById('game-container').style.display = 'block';
             document.getElementById('flash-overlay').style.opacity = 0;
             
-            // 更新難度顯示
+            // 更新難度顯示標籤
             const diffLabel = document.getElementById('diff-label');
             if(diffLabel) {
                 diffLabel.innerText = DIFFICULTY[currentDiff].name;
@@ -325,7 +356,10 @@
             document.querySelectorAll('.overlay-screen').forEach(el => el.classList.add('hidden'));
             document.getElementById('flash-overlay').style.opacity = 0;
             document.body.style.backgroundColor = "#fdfdf5";
+            
+            // 重置首頁狀態
             document.getElementById('start-screen').classList.remove('hidden');
+            setDifficulty(currentDiff); // 恢復上次選擇的難度顯示
         };
 
         // =============================================
@@ -526,7 +560,6 @@
             let pool = [];
             let dangerRate = DIFFICULTY[currentDiff].dangerProb;
             
-            // 70-80% 安全, 20-30% 危險
             if (Math.random() > dangerRate) {
                 pool = [...STAGES[sIdx].objs];
                 if (sIdx > 0) pool = pool.concat(STAGES[sIdx-1].objs);
